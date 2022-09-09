@@ -40,7 +40,10 @@ public class HTTPResponseProcessorProxy extends HTTPResponseProcessor {
     public int initialize() {
         Out.debug(session + ": Initializing proxy request...");
         tcpBuffer = ByteBuffer.allocateDirect(Settings.TCP_PACKET_SIZE);
-        return proxyDownloader.initialize();
+        if(Settings.isDirectDownloading())
+            return proxyDownloader.initialize(true);
+        else
+            return proxyDownloader.initialize(false);
     }
 
     public String getContentType() {

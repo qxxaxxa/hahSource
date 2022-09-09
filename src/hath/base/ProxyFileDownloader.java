@@ -49,31 +49,43 @@ public class ProxyFileDownloader implements Runnable {
     private URLConnection connection;
     private MessageDigest sha1Digest;
     private int readoff, writeoff, contentLength;
+
+    private boolean useProxy;
     private boolean streamThreadSuccess = false, streamThreadComplete = false, proxyThreadComplete = false, fileFinalized = false;
 
     public ProxyFileDownloader(HentaiAtHomeClient client, String fileid, URL[] sources) {
         this.client = client;
         this.fileid = fileid;
         this.sources = sources;
-
+        useProxy = false;
         this.requestedHVFile = HVFile.getHVFileFromFileid(fileid);
         writeoff = 0;
         readoff = 0;
         myThread = new Thread(this);
     }
 
-    public int initialize() {
+    public int initialize(boolean flag) {
         // we'll need to run this in a private thread so we can push data to the originating client at the same time we download it (pass-through)
         // this will NOT work with HTTPS (see FileDownloader), but upstream can be kept as HTTP so This Is Fine™
 
-        Out.debug("ProxyFileDownloader::initialize with fileid=" + fileid + " sources=" + Arrays.toString(sources));
+        useProxy = flag;
+        if(flag)
+        {
+            Out.debug("ProxyFileDownloader::initialize with fileid=" + fileid + " sources=" + Arrays.toString(sources) + "via proxy");
+        } else
+        {
+            Settings.setIsDirectDownloading(Boolean.TRUE);
+            Out.debug("ProxyFileDownloader::initialize with fileid=" + fileid + " sources=" + Arrays.toString(sources));
+        }
         int retval = 500;
-
         for (URL source : sources) {
             try {
                 Out.debug("ProxyFileDownloader: Requesting file download from " + source);
 
-                connection = source.openConnection();
+                if(flag)
+                    connection = source.openConnection(Settings.getProxy());
+                else
+                    connection = source.openConnection();
                 connection.setConnectTimeout(5000);
                 connection.setReadTimeout(30000);
                 connection.setRequestProperty("Hath-Request", Settings.getClientID() + "-" + Tools.getSHA1String(Settings.getClientKey() + fileid));
@@ -244,6 +256,8 @@ public class ProxyFileDownloader implements Runnable {
     public void proxyThreadCompleted() {
         Stats.fileSent();
         proxyThreadComplete = true;
+        if (!useProxy)
+            Settings.setIsDirectDownloading(Boolean.TRUE);
         checkFinalizeDownloadedFile();
     }
 

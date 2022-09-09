@@ -165,9 +165,13 @@ public class FileDownloader implements Runnable {
 
                 try {
                     Out.debug("Connecting to " + source.getHost() + "...");
-
+                    URLConnection connection = null;
                     // should return a HttpURLConnection for http and HttpsURLConnection for https
-                    URLConnection connection = source.openConnection();
+
+                    if(null == source.getQuery() || source.getQuery().contains("fetch"))
+                        connection = source.openConnection(Settings.getProxy());
+                    else
+                        connection = source.openConnection();
 
                     connection.setConnectTimeout(5000);
                     connection.setReadTimeout(timeout);

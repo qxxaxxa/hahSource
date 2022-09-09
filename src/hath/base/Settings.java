@@ -24,7 +24,7 @@ along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
 package hath.base;
 
 import java.io.File;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.Hashtable;
 
 public class Settings {
@@ -56,6 +56,17 @@ public class Settings {
     private static Hashtable<String, Integer> staticRanges = null;
     private static File datadir = null, logdir = null, cachedir = null, tempdir = null, downloaddir = null;
     private static String clientKey = "", clientHost = "", dataDirPath = "data", logDirPath = "log", cacheDirPath = "cache", tempDirPath = "tmp", downloadDirPath = "download";
+    private static String proxyHost = "127.0.0.1";
+    private static int proxyPort = 7890;
+
+    private static boolean useProxy = false;
+    private static java.net.Proxy.Type proxyType;
+    private static Proxy proxy;
+    private static volatile Boolean isDirectDownloading;
+
+    static {
+        isDirectDownloading = Boolean.FALSE;
+    }
 
     private static int clientID = 0, clientPort = 0, throttle_bytes = 0, overrideConns = 0, serverTimeDelta = 0, maxAllowedFileSize = 104857600, currentStaticRangeCount = 0;
     private static long disklimit_bytes = 0, diskremaining_bytes = 0, fileSystemBlocksize = 4096;
@@ -270,6 +281,17 @@ public class Settings {
                 downloadDirPath = value;
             } else if (setting.equals("flush_logs")) {
                 flushLogs = value.equals("true");
+            } else if (setting.equals("proxy_host")) {
+                proxyHost = value;
+            } else if (setting.equals("proxy_port")) {
+                proxyPort = Integer.parseInt(value);
+            } else if (setting.equals("proxy_type")) {
+                if (value.equals("sock"))
+                    proxyType = java.net.Proxy.Type.SOCKS;
+                else
+                    proxyType = java.net.Proxy.Type.HTTP;
+            } else if (setting.equals("use_proxy")) {
+                useProxy = value.equals("true");
             } else if (!setting.equals("silentstart")) {
                 // don't flag errors if the setting is handled by the GUI
                 Out.warning("Unknown setting " + setting + " = " + value);
@@ -300,6 +322,24 @@ public class Settings {
 
         Out.debug("Using --download-dir=" + downloadDirPath);
         downloaddir = Tools.checkAndCreateDir(new File(downloadDirPath));
+    }
+
+    public static Proxy getProxy() {
+        if (proxy == null)
+            proxy = new Proxy(proxyType, new InetSocketAddress(proxyHost, proxyPort));
+        return proxy;
+    }
+
+    public static boolean isUseProxy() {
+        return useProxy;
+    }
+
+    public static Boolean isDirectDownloading() {
+        return isDirectDownloading;
+    }
+
+    public static void setIsDirectDownloading(Boolean boolean1) {
+        isDirectDownloading = boolean1;
     }
 
     // accessor methods
