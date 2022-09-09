@@ -41,6 +41,7 @@ public class FileDownloader implements Runnable {
     private HTTPBandwidthMonitor downloadLimiter = null;
     private Path outputPath = null;
     private Thread myThread;
+    private Boolean keepAlive;
     private boolean started = false, discardData = false;
 
     public FileDownloader(URL source, int timeout, int maxDLTime) {
@@ -48,6 +49,7 @@ public class FileDownloader implements Runnable {
         this.source = source;
         this.timeout = timeout;
         this.maxDLTime = maxDLTime;
+        this.keepAlive = true;
     }
 
     public FileDownloader(URL source, int timeout, int maxDLTime, boolean discardData) {
@@ -169,7 +171,10 @@ public class FileDownloader implements Runnable {
 
                     connection.setConnectTimeout(5000);
                     connection.setReadTimeout(timeout);
-                    connection.setRequestProperty("Connection", "Close");
+                    if (keepAlive)
+                        connection.setRequestProperty("Connection", "keep-alive");
+                    else
+                        connection.setRequestProperty("Connection", "Close");
                     connection.setRequestProperty("User-Agent", "Hentai@Home " + Settings.CLIENT_VERSION);
                     connection.connect();
 
@@ -289,7 +294,7 @@ public class FileDownloader implements Runnable {
                 } finally {
                     try {
                         is.close();
-                    } catch (Exception e) {
+                    } catch (Exception ignored) {
                     }
                 }
             }
@@ -301,7 +306,7 @@ public class FileDownloader implements Runnable {
                     if (!success) {
                         outputPath.toFile().delete();
                     }
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
             }
 
