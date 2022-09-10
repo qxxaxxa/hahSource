@@ -23,6 +23,7 @@ along with Hentai@Home.  If not, see <http://www.gnu.org/licenses/>.
 
 package hath.base;
 
+import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +70,12 @@ public class HTTPResponse {
             } else if (command.equalsIgnoreCase("refresh_certs")) {
                 client.setCertRefresh();
                 return new HTTPResponseProcessorText("");
+            } else if (command.equalsIgnoreCase("suspend")) {
+                client.getServerHandler().notifySuspend();
+                return new HTTPResponseProcessorText("suspend");
+            } else if (command.equalsIgnoreCase("resume")) {
+                client.getServerHandler().notifyResume();
+                return new HTTPResponseProcessorText("resume");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -207,8 +214,7 @@ public class HTTPResponse {
             return;
         } else if (urlparts[1].equals("servercmd")) {
             // form: /servercmd/$command/$additional/$time/$key
-
-            if (!Settings.isValidRPCServer(session.getSocketInetAddress())) {
+            if (!localNetworkAccess && !Settings.isValidRPCServer(session.getSocketInetAddress())) {
                 Out.debug(session + " Got a servercmd from an unauthorized IP address");
                 responseStatusCode = 403;
                 return;
