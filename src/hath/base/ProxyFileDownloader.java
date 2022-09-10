@@ -66,7 +66,7 @@ public class ProxyFileDownloader implements Runnable {
 
     public int initialize(boolean flag) {
         // we'll need to run this in a private thread so we can push data to the originating client at the same time we download it (pass-through)
-        // this will NOT work with HTTPS (see FileDownloader), but upstream can be kept as HTTP so This Is Fine™
+        // this will NOT work with HTTPS (see FileDownloader), but upstream can be kept as HTTP so This Is Fine
 
         useProxy = flag;
         if(flag)
@@ -257,7 +257,7 @@ public class ProxyFileDownloader implements Runnable {
         Stats.fileSent();
         proxyThreadComplete = true;
         if (!useProxy)
-            Settings.setIsDirectDownloading(Boolean.TRUE);
+            Settings.setIsDirectDownloading(Boolean.FALSE);
         checkFinalizeDownloadedFile();
     }
 
